@@ -1,0 +1,28 @@
+{
+  "name": "my-tribe-meme",
+  "version": "1.0.0",
+  "description": "**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx hardhat test",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network intuition",
+    "create-token": "node scripts/createToken.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "chai": "^4.5.0",
+    "ethers": "^6.15.0",
+    "hardhat": "^3.0.6"
+  }
+}
