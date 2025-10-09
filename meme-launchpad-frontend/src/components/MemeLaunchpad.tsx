@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { injected, walletConnect, metaMask, coinbaseWallet } from 'wagmi/connectors'
+import { useAccount } from 'wagmi'
 import TokenCreation from './TokenCreation'
 import TokenDiscovery from './TokenDiscovery'
 import TradingInterface from './TradingInterface'
@@ -11,6 +10,7 @@ type TabType = 'create' | 'discover' | 'trade' | 'migrate'
 
 const MemeLaunchpad: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('discover')
+  const [particles, setParticles] = useState<JSX.Element[]>([])
   const { address, isConnected } = useAccount()
 
   const tabs = [
@@ -20,98 +20,155 @@ const MemeLaunchpad: React.FC = () => {
     { id: 'migrate' as TabType, label: 'Migrate', icon: '⬆️' },
   ]
 
+  // Generate floating particles
+  useEffect(() => {
+    const particleElements = Array.from({ length: 20 }, (_, i) => (
+      <div
+        key={i}
+        className="particle"
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * 8}s`,
+          animationDuration: `${8 + Math.random() * 4}s`
+        }}
+      />
+    ))
+    setParticles(particleElements)
+  }, [])
+
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-8">Meme Launchpad</h1>
-          <p className="text-gray-300 mb-8">Connect your wallet to start creating and trading meme tokens</p>
-          <WalletConnect />
+      <div className="hero-section">
+        {/* Background Elements */}
+        <div className="glowing-circle" />
+        <div className="particles">
+          {particles}
+        </div>
+
+        {/* Modern Header */}
+        <header className="modern-header">
+          <div className="header-content">
+            <div className="header-left">
+              <input
+                type="text"
+                placeholder="Search Intuition"
+                className="search-bar"
+              />
+            </div>
+            <div className="header-right">
+              <WalletConnect />
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Content */}
+        <div className="hero-content">
+          <div className="section-title">DECENTRALIZED KNOWLEDGE NETWORK</div>
+          <h1 className="hero-title">
+            Your Knowledge.<br />
+            Your Intuition.
+          </h1>
+          <p className="subtitle">
+            Your Intuition grows with you. The more you contribute, explore,
+            and invest, the more personalized, powerful, and rewarding your
+            experience becomes.
+          </p>
+          <button className="btn-primary">
+            🚀 Create Your Intuition
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      {/* Header */}
-      <header className="bg-black bg-opacity-50 backdrop-blur-md border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-white">Meme Launchpad</h1>
-              <div className="hidden md:flex space-x-1">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
-                      activeTab === tab.id
-                        ? 'bg-purple-600 text-white shadow-lg'
-                        : 'text-gray-300 hover:text-white hover:bg-purple-800'
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+    <div className="hero-section">
+      {/* Background Elements */}
+      <div className="glowing-circle" />
+      <div className="particles">
+        {particles}
+      </div>
 
-            {/* Wallet Connection */}
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-300 text-sm">
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </span>
-              <WalletConnect />
-            </div>
+      {/* Modern Header */}
+      <header className="modern-header">
+        <div className="header-content">
+          <div className="header-left">
+            <input
+              type="text"
+              placeholder="Search Intuition"
+              className="search-bar"
+            />
           </div>
-
-          {/* Mobile Tabs */}
-          <div className="md:hidden flex space-x-1 pb-4 overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 flex-shrink-0 ${
-                  activeTab === tab.id
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:text-white hover:bg-purple-800'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span className="text-sm">{tab.label}</span>
-              </button>
-            ))}
+          <div className="header-right">
+            <img
+              src="/newtribe.jpg"
+              alt="Tribe Logo"
+              className="logo-image"
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '8px',
+                marginRight: '16px',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 0 20px rgba(255, 255, 255, 0.2)'
+              }}
+            />
+            <span className="text-glow text-sm">
+              {address?.slice(0, 6)}...{address?.slice(-4)}
+            </span>
+            <WalletConnect />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'create' && <TokenCreation />}
-        {activeTab === 'discover' && <TokenDiscovery />}
-        {activeTab === 'trade' && <TradingInterface />}
-        {activeTab === 'migrate' && <MigrationInterface />}
-      </main>
+      {/* Main Content Area */}
+      <main style={{ paddingTop: '100px' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Tab Navigation */}
+          <div className="glass-card mb-8">
+            <div className="flex flex-wrap gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
+                    activeTab === tab.id
+                      ? 'bg-white bg-opacity-20 text-white'
+                      : 'text-gray-300 hover:text-white hover:bg-white hover:bg-opacity-10'
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Footer */}
-      <footer className="bg-black bg-opacity-50 backdrop-blur-md border-t border-gray-700 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-gray-400">
-            <p>Built on Intuition Testnet | Contract addresses available on{' '}
+          {/* Tab Content */}
+          <div className="glass-card">
+            {activeTab === 'create' && <TokenCreation />}
+            {activeTab === 'discover' && <TokenDiscovery />}
+            {activeTab === 'trade' && <TradingInterface />}
+            {activeTab === 'migrate' && <MigrationInterface />}
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-16 py-8 text-center">
+            <p className="text-gray-400">
+              Built on Intuition Testnet | Contract addresses available on{' '}
               <a
                 href="https://intuition-testnet.explorer.caldera.xyz/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-purple-400 hover:text-purple-300"
+                className="text-purple-400 hover:text-purple-300 transition-colors"
               >
                 Explorer
               </a>
             </p>
-          </div>
+          </footer>
         </div>
-      </footer>
+      </main>
     </div>
   )
 }
