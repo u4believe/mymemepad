@@ -10,10 +10,62 @@ const MigrationInterface: React.FC = () => {
   const { data: migratableTokens, isLoading } = useQuery({
     queryKey: ['migratableTokens'],
     queryFn: async () => {
-      // This would need to be implemented to fetch tokens that should migrate
-      // For now, return empty array
-      return []
+      try {
+        const tokenCount = await contractService.getTokenCount()
+
+        if (Number(tokenCount) === 0) {
+          return []
+        }
+
+        // Get all token addresses (in batches to avoid overwhelming the RPC)
+        const batchSize = 50
+        const allTokens: TokenWithBondingCurve[] = []
+
+        for (let i = 0; i < Number(tokenCount); i += batchSize) {
+          const endIndex = Math.min(i + batchSize, Number(tokenCount))
+          const tokenAddresses = await contractService.getTokensInRange(i, endIndex)
+
+          // Process each token to check if it's ready for migration
+          for (const tokenAddress of tokenAddresses) {
+            try {
+              const [bondingCurveAddress, tokenInfo] = await Promise.all([
+                contractService.getBondingCurve(tokenAddress),
+                contractService.getTokenInfo(tokenAddress),
+              ])
+
+              if (bondingCurveAddress === '0x0000000000000000000000000000000000000000') {
+                continue // Skip tokens without bonding curves
+              }
+
+              const [stats, isMigrated] = await Promise.all([
+                contractService.getBondingCurveStats(bondingCurveAddress),
+                contractService.isTokenMigrated(tokenAddress),
+              ])
+
+              // Check if token should migrate (market cap >= 10M TRUST and not already migrated)
+              const marketCapValue = parseFloat(stats.marketCap)
+              if (marketCapValue >= 10000000 && !isMigrated) {
+                allTokens.push({
+                  token: tokenInfo,
+                  bondingCurveAddress,
+                  stats,
+                  isMigrated,
+                })
+              }
+            } catch (error) {
+              console.error(`Error processing token ${tokenAddress}:`, error)
+              continue
+            }
+          }
+        }
+
+        return allTokens
+      } catch (error) {
+        console.error('Error fetching migratable tokens:', error)
+        return []
+      }
     },
+    refetchInterval: 60000, // Refetch every minute
   })
 
   const migrateMutation = useMutation({

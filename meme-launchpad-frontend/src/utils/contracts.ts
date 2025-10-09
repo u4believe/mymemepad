@@ -176,6 +176,19 @@ class ContractService {
     return formatEther(price)
   }
 
+  async getBondingCurveStats(bondingCurveAddress: string) {
+    const provider = await this.getProvider()
+    const bondingCurveContract = new Contract(bondingCurveAddress, BONDING_CURVE_ABI, provider)
+    const stats = await bondingCurveContract.getStats()
+    return {
+      tokensSold: formatEther(stats[0]),
+      trustReceived: formatEther(stats[1]),
+      trustReserve: formatEther(stats[2]),
+      currentPrice: formatEther(stats[3]),
+      marketCap: formatEther(stats[4]),
+    }
+  }
+
   // Token Functions
   async getTokenInfo(tokenAddress: string) {
     const provider = await this.getProvider()

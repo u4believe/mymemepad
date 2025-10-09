@@ -41,7 +41,7 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [intuitionTestnet.id]: http(),
+    [intuitionTestnet.id]: http(intuitionTestnet.rpcUrls.default.http[0]),
     [mainnet.id]: http(),
     [sepolia.id]: http(),
   },

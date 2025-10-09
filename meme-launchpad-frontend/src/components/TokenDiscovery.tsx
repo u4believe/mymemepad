@@ -17,7 +17,7 @@ const TokenDiscovery: React.FC = () => {
   })
 
   // Fetch tokens for current page
-  const { data: tokenAddresses, isLoading } = useQuery({
+  const { data: tokenAddresses, isLoading } = useQuery<string[]>({
     queryKey: ['tokens', currentPage],
     queryFn: async () => {
       if (!tokenCount) return []
