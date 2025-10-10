@@ -119,12 +119,28 @@ const TokenCreation: React.FC = () => {
           {/* Creation Fee Notice */}
           <div className="bg-purple-900 bg-opacity-30 border border-purple-700 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <div className="text-purple-400">ℹ️</div>
+              <div className="text-purple-400">💰</div>
               <div>
-                <h4 className="text-sm font-medium text-purple-300">Creation Fee</h4>
+                <h4 className="text-sm font-medium text-purple-300">Creation Fee: 10 $TRUST</h4>
                 <p className="text-sm text-purple-200">
                   Creating a token requires 10 $TRUST tokens as a creation fee.
-                  Make sure your wallet has sufficient $TRUST balance.
+                  This fee covers deployment and initial liquidity setup.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Creator Allocation Info */}
+          <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="text-blue-400">🎁</div>
+              <div>
+                <h4 className="text-sm font-medium text-blue-300">Creator Benefits</h4>
+                <p className="text-sm text-blue-200 mb-2">
+                  As the creator, you'll receive 0.1% of max supply as locked tokens for 365 days.
+                </p>
+                <p className="text-xs text-blue-300">
+                  Max Supply: {form.maxSupply ? (parseInt(form.maxSupply) * 0.001).toLocaleString() : '0'} tokens (0.1%)
                 </p>
               </div>
             </div>
@@ -148,13 +164,16 @@ const TokenCreation: React.FC = () => {
         </form>
 
         {/* Token Preview */}
-        {form.name && form.symbol && (
+        {form.name && form.symbol && form.maxSupply && (
           <div className="mt-8 p-4 bg-gray-700 rounded-lg">
             <h3 className="text-lg font-semibold text-white mb-2">Token Preview</h3>
             <div className="space-y-2 text-sm">
               <p><span className="text-gray-400">Name:</span> {form.name}</p>
               <p><span className="text-gray-400">Symbol:</span> {form.symbol}</p>
-              <p><span className="text-gray-400">Max Supply:</span> {form.maxSupply ? parseInt(form.maxSupply).toLocaleString() : '0'}</p>
+              <p><span className="text-gray-400">Max Supply:</span> {parseInt(form.maxSupply).toLocaleString()}</p>
+              <p><span className="text-gray-400">Creator Allocation:</span> {Math.floor(parseInt(form.maxSupply) * 0.001).toLocaleString()} tokens (0.1%)</p>
+              <p><span className="text-gray-400">Lock Period:</span> 365 days</p>
+              <p><span className="text-gray-400">Creation Fee:</span> 10 $TRUST</p>
             </div>
           </div>
         )}

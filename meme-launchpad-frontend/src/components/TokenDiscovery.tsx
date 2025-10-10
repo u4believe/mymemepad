@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { contractService } from '../utils/contracts'
 import { TokenWithBondingCurve } from '../types'
+
+type SortOption = 'marketCap' | 'price' | 'name' | 'newest'
+type FilterOption = 'all' | 'bonding-curve' | 'migrated'
 
 const TokenDiscovery: React.FC = () => {
   const [tokens, setTokens] = useState<TokenWithBondingCurve[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [filterBy, setFilterBy] = useState<FilterOption>('all')
   const tokensPerPage = 10
 
   // Fetch token count
@@ -75,7 +81,47 @@ const TokenDiscovery: React.FC = () => {
     }
   }, [tokenAddresses])
 
-  const totalPages = tokenCount ? Math.ceil(Number(tokenCount) / tokensPerPage) : 0
+  // Filter and sort tokens
+  const filteredAndSortedTokens = useMemo(() => {
+    let filtered = tokens.filter(token => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesName = token.token.name.toLowerCase().includes(searchLower)
+        const matchesSymbol = token.token.symbol.toLowerCase().includes(searchLower)
+        if (!matchesName && !matchesSymbol) return false
+      }
+
+      // Status filter
+      if (filterBy === 'bonding-curve') return !token.isMigrated
+      if (filterBy === 'migrated') return token.isMigrated
+      return true
+    })
+
+    // Sort tokens
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'marketCap':
+          return parseFloat(b.stats.marketCap) - parseFloat(a.stats.marketCap)
+        case 'price':
+          return parseFloat(b.stats.currentPrice) - parseFloat(a.stats.currentPrice)
+        case 'name':
+          return a.token.name.localeCompare(b.token.name)
+        case 'newest':
+        default:
+          // For newest, we'll use the token address as a proxy (higher address = newer)
+          return b.token.address.localeCompare(a.token.address)
+      }
+    })
+
+    return filtered
+  }, [tokens, searchTerm, sortBy, filterBy])
+
+  const totalPages = Math.ceil(filteredAndSortedTokens.length / tokensPerPage)
+  const paginatedTokens = filteredAndSortedTokens.slice(
+    currentPage * tokensPerPage,
+    (currentPage + 1) * tokensPerPage
+  )
 
   const formatPrice = (price: string) => {
     return parseFloat(price).toFixed(6)
@@ -99,14 +145,70 @@ const TokenDiscovery: React.FC = () => {
         </p>
       </div>
 
-      {/* Token Count */}
-      {tokenCount && (
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-          <p className="text-center text-gray-300">
-            Total Tokens Created: <span className="text-purple-400 font-bold">{tokenCount.toString()}</span>
-          </p>
+      {/* Search and Filter Controls */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">Search Tokens</label>
+            <input
+              type="text"
+              placeholder="Search by name or symbol..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Filter</label>
+            <select
+              value={filterBy}
+              onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="all">All Tokens</option>
+              <option value="bonding-curve">Bonding Curve</option>
+              <option value="migrated">Migrated to DEX</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Sort By</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="newest">Newest First</option>
+              <option value="marketCap">Market Cap</option>
+              <option value="price">Price</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
         </div>
-      )}
+
+        {/* Results Summary */}
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-400">
+              Showing {paginatedTokens.length} of {filteredAndSortedTokens.length} tokens
+              {searchTerm && (
+                <span className="ml-2 text-purple-400">
+                  for "{searchTerm}"
+                </span>
+              )}
+            </span>
+            {tokenCount && (
+              <span className="text-gray-400">
+                Total Created: <span className="text-purple-400 font-bold">{tokenCount.toString()}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Loading State */}
       {isLoading && (
@@ -117,7 +219,7 @@ const TokenDiscovery: React.FC = () => {
 
       {/* Token Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {tokens.map((tokenData) => (
+        {paginatedTokens.map((tokenData) => (
           <div
             key={tokenData.token.address}
             className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-purple-500 transition-colors duration-200"
@@ -189,11 +291,30 @@ const TokenDiscovery: React.FC = () => {
       </div>
 
       {/* Empty State */}
-      {!isLoading && tokens.length === 0 && (
+      {!isLoading && paginatedTokens.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🚀</div>
-          <h3 className="text-xl font-semibold text-white mb-2">No Tokens Found</h3>
-          <p className="text-gray-400 mb-6">Be the first to create a meme token!</p>
+          <div className="text-6xl mb-4">🔍</div>
+          <h3 className="text-xl font-semibold text-white mb-2">
+            {searchTerm || filterBy !== 'all' ? 'No Tokens Match Filters' : 'No Tokens Found'}
+          </h3>
+          <p className="text-gray-400 mb-6">
+            {searchTerm || filterBy !== 'all'
+              ? 'Try adjusting your search or filter criteria.'
+              : 'Be the first to create a meme token!'
+            }
+          </p>
+          {(searchTerm || filterBy !== 'all') && (
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setFilterBy('all')
+                setCurrentPage(0)
+              }}
+              className="bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200 mr-4"
+            >
+              Clear Filters
+            </button>
+          )}
           <button className="bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200">
             Create First Token
           </button>
@@ -201,7 +322,7 @@ const TokenDiscovery: React.FC = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {totalPages > 1 && paginatedTokens.length > 0 && (
         <div className="flex justify-center space-x-2 mt-8">
           <button
             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}

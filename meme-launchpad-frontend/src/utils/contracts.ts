@@ -225,6 +225,16 @@ class ContractService {
     return await tx.wait()
   }
 
+  async claimCreatorAllocation(tokenAddress: string) {
+    const signer = await this.getSigner()
+    const tokenContract = new Contract(tokenAddress, [
+      'function claimCreatorAllocation() external',
+    ], signer)
+
+    const tx = await tokenContract.claimCreatorAllocation()
+    return await tx.wait()
+  }
+
   // Migration Functions
   async migrateToDEX(tokenAddress: string, bondingCurveAddress: string) {
     const signer = await this.getSigner()

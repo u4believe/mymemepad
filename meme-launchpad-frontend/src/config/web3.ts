@@ -9,8 +9,8 @@ export const intuitionTestnet = {
   network: 'intuition-testnet',
   nativeCurrency: {
     decimals: 18,
-    name: 'Ethereum',
-    symbol: 'ETH',
+    name: 'TTRUST',
+    symbol: 'TTRUST',
   },
   rpcUrls: {
     default: {

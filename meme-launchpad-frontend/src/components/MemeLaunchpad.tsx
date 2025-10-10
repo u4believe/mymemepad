@@ -10,7 +10,6 @@ type TabType = 'create' | 'discover' | 'trade' | 'migrate'
 
 const MemeLaunchpad: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('discover')
-  const [particles, setParticles] = useState<JSX.Element[]>([])
   const { address, isConnected } = useAccount()
 
   const tabs = [
@@ -20,31 +19,11 @@ const MemeLaunchpad: React.FC = () => {
     { id: 'migrate' as TabType, label: 'Migrate', icon: '⬆️' },
   ]
 
-  // Generate floating particles
-  useEffect(() => {
-    const particleElements = Array.from({ length: 20 }, (_, i) => (
-      <div
-        key={i}
-        className="particle"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 8}s`,
-          animationDuration: `${8 + Math.random() * 4}s`
-        }}
-      />
-    ))
-    setParticles(particleElements)
-  }, [])
+  // Particles disabled for cleaner background
 
   if (!isConnected) {
     return (
       <div className="hero-section">
-        {/* Background Elements */}
-        <div className="glowing-circle" />
-        <div className="particles">
-          {particles}
-        </div>
 
         {/* Modern Header */}
         <header className="modern-header">
@@ -84,11 +63,6 @@ const MemeLaunchpad: React.FC = () => {
 
   return (
     <div className="hero-section">
-      {/* Background Elements */}
-      <div className="glowing-circle" />
-      <div className="particles">
-        {particles}
-      </div>
 
       {/* Modern Header */}
       <header className="modern-header">
