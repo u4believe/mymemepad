@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { WalletProvider } from '@/components/wallet-provider';
+import { Providers } from '@/components/providers';
 import { Header } from '@/components/header';
-import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'MyTribe - Meme Token Launchpad',
@@ -21,15 +20,15 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
       </head>
-      <body className="min-h-screen bg-background font-body antialiased">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-background/80"></div>
-        <WalletProvider>
+      <body className="min-h-screen bg-[var(--background)] font-body antialiased">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-[var(--background)]/80"></div>
+        <div className="cosmic-particles"></div>
+        <Providers>
           <div className="relative flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
           </div>
-          <Toaster />
-        </WalletProvider>
+        </Providers>
       </body>
     </html>
   );
