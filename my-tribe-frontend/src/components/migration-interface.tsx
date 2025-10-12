@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { Button } from './button'
+import { Button } from '@/components/ui/button'
 import { CheckCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import { CONTRACT_ADDRESSES, BONDING_CURVE_ABI, LIQUIDITY_MIGRATOR_ABI, TRUST_TOKEN_ABI } from '../lib/web3'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from './button'
+import { Button } from '@/components/ui/button'
 import { Input } from './input'
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
 

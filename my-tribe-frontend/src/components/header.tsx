@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Rocket, Wallet } from 'lucide-react'
-import { Button } from './button'
+import { Button } from '@/components/ui/button'
 import { useWallet } from './wallet-provider'
 
 export function Header() {
