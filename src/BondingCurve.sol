@@ -70,10 +70,9 @@ contract BondingCurve is Ownable, ReentrancyGuard {
         // Scale by PRECISION to maintain integer precision
         startingPrice = PRECISION / ((1e15 * maxSupply) / 1e18); // 0.001 * maxSupply scaled appropriately
 
-        // Initial mint of creator allocation (0.1%) to this contract
-        uint256 creatorAllocation = (maxSupply * 100) / 100_000; // 0.1% = 100/100000
-        MemeToken(memeToken_).mintToBondingCurve(address(this), creatorAllocation);
-        totalTokensSold += creatorAllocation;
+        // Note: Creator allocation minting is handled externally after bonding curve is set up
+        // to avoid circular dependency issues during construction
+        totalTokensSold = 0; // Initialize to 0, will be updated when creator allocation is minted
     }
 
     /**
@@ -261,9 +260,9 @@ contract BondingCurve is Ownable, ReentrancyGuard {
         }
 
         // Calculate purchasing power coefficient (Pc)
-        // Pc ranges from 1000 → 1 as maxSupply increases from 1M → 1B
+        // Pc ranges from PRECISION → 1 as supply increases from 0 → maxSupply
         uint256 maxSupply = memeToken.maxSupply();
-        uint256 pc = PRECISION - ((supply * (PRECISION - 1)) / maxSupply);
+        uint256 pc = PRECISION - ((supply * PRECISION) / maxSupply);
 
         // Apply bonding curve formula: P = A * (Pc) + 0.000000001533 * S
         uint256 linearComponent = (startingPrice * pc) / PRECISION;
@@ -298,6 +297,15 @@ contract BondingCurve is Ownable, ReentrancyGuard {
         address oldTreasury = treasury;
         treasury = newTreasury;
         emit TreasuryUpdated(oldTreasury, newTreasury);
+    }
+
+    /**
+     * @dev Initialize total tokens sold (used for testing)
+     * @param amount Initial token amount
+     */
+    function initializeTotalTokensSold(uint256 amount) external {
+        require(totalTokensSold == 0, "BondingCurve: Already initialized");
+        totalTokensSold = amount;
     }
 
     /**

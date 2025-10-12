@@ -16,7 +16,7 @@ contract MemeTokenTest is Test {
 
     string constant TOKEN_NAME = "Test Meme Token";
     string constant TOKEN_SYMBOL = "TMT";
-    uint256 constant MAX_SUPPLY = 1_000_000 * 1e18; // 1M tokens
+    uint256 constant MAX_SUPPLY = 1_000_000_000; // 1B tokens (within valid range)
 
     function setUp() public {
         // Deploy mock TRUST token
@@ -88,7 +88,7 @@ contract MemeTokenTest is Test {
     function testAccessControl() public {
         // Only owner can set bonding curve
         vm.prank(user1);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user1));
         memeToken.setBondingCurve(user1);
 
         // Cannot set zero address
@@ -106,7 +106,7 @@ contract MemeTokenTest is Test {
         vm.expectRevert("MemeToken: Invalid creator address");
         new MemeToken(TOKEN_NAME, TOKEN_SYMBOL, MAX_SUPPLY, address(0), owner);
 
-        vm.expectRevert("MemeToken: Invalid owner address");
+        vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
         new MemeToken(TOKEN_NAME, TOKEN_SYMBOL, MAX_SUPPLY, creator, address(0));
     }
 
@@ -123,14 +123,14 @@ contract MemeTokenTest is Test {
         // Set bonding curve in token
         memeToken.setBondingCurve(address(bondingCurve));
 
-        // Test minting from bonding curve
-        uint256 mintAmount = 1000 * 1e18;
+        // Test minting from bonding curve (within available supply: 1B - 1M = 999M)
+        uint256 mintAmount = 500 * 1e6; // 500 million tokens (within available supply)
         bondingCurve.mintToBondingCurve(user1, mintAmount);
 
         assertEq(memeToken.balanceOf(user1), mintAmount);
 
         // Test burning from bonding curve
-        uint256 burnAmount = 500 * 1e18;
+        uint256 burnAmount = 500 * 1e6; // 500 million tokens
         vm.prank(address(bondingCurve));
         memeToken.burnFromBondingCurve(user1, burnAmount);
 
