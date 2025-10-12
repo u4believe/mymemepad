@@ -1,13 +1,26 @@
 import { createConfig, http } from 'wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
+import {
+  getMultiVaultAddressFromChainId,
+  intuitionTestnet as intuitionChain,
+} from '@0xintuition/protocol'
+import {
+  createPublicClient,
+  createWalletClient,
+  http as httpClient,
+} from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 
 // Get project ID from environment variables
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
 
-// Define Intuition Testnet chain
+// Get the MultiVault address for Intuition Testnet
+export const MULTI_VAULT_ADDRESS = getMultiVaultAddressFromChainId(intuitionChain.id)
+
+// Define Intuition Testnet chain (already available from SDK)
 const intuitionTestnet = {
-  id: 13579,
-  name: 'Intuition Testnet',
+  id: intuitionChain.id,
+  name: intuitionChain.name,
   network: 'intuition-testnet',
   nativeCurrency: {
     decimals: 18,
@@ -48,6 +61,22 @@ export const CONTRACT_ADDRESSES = {
   TREASURY: process.env.NEXT_PUBLIC_TREASURY_ADDRESS || '',
   TRUST_TOKEN: process.env.NEXT_PUBLIC_TRUST_TOKEN_ADDRESS || '',
 } as const
+
+// Intuition SDK Client Setup
+export const publicClient = createPublicClient({
+  chain: intuitionTestnet,
+  transport: httpClient(intuitionTestnet.rpcUrls.default.http[0]),
+})
+
+// Create wallet client (for transactions)
+export const createIntuitionWalletClient = (privateKey: `0x${string}`) => {
+  const account = privateKeyToAccount(privateKey)
+  return createWalletClient({
+    chain: intuitionTestnet,
+    transport: httpClient(intuitionTestnet.rpcUrls.default.http[0]),
+    account: account,
+  })
+}
 
 // Contract ABIs
 export const BONDING_CURVE_ABI = [
@@ -174,6 +203,149 @@ export const TRUST_TOKEN_ABI = [
     "type": "function"
   }
 ] as const
+
+// Intuition SDK Utility Functions
+export class IntuitionSDK {
+  private publicClient: any
+  private walletClient: any
+
+  constructor(publicClient: any, walletClient?: any) {
+    this.publicClient = publicClient
+    this.walletClient = walletClient
+  }
+
+  // Deposit TTRUST tokens to MultiVault
+  async deposit(amount: bigint, walletClient: any) {
+    try {
+      const hash = await walletClient.writeContract({
+        address: MULTI_VAULT_ADDRESS,
+        abi: [
+          {
+            inputs: [
+              { name: 'amount', type: 'uint256' },
+              { name: 'recipient', type: 'address' }
+            ],
+            name: 'deposit',
+            outputs: [{ name: '', type: 'uint256' }],
+            stateMutability: 'payable',
+            type: 'function'
+          }
+        ],
+        functionName: 'deposit',
+        args: [amount, walletClient.account.address],
+        value: amount,
+      })
+      return hash
+    } catch (error) {
+      console.error('Deposit failed:', error)
+      throw error
+    }
+  }
+
+  // Withdraw TTRUST tokens from MultiVault
+  async withdraw(amount: bigint, walletClient: any) {
+    try {
+      const hash = await walletClient.writeContract({
+        address: MULTI_VAULT_ADDRESS,
+        abi: [
+          {
+            inputs: [{ name: 'amount', type: 'uint256' }],
+            name: 'withdraw',
+            outputs: [{ name: '', type: 'uint256' }],
+            stateMutability: 'nonpayable',
+            type: 'function'
+          }
+        ],
+        functionName: 'withdraw',
+        args: [amount],
+      })
+      return hash
+    } catch (error) {
+      console.error('Withdrawal failed:', error)
+      throw error
+    }
+  }
+
+  // Get TTRUST balance
+  async getTrustBalance(address: string) {
+    try {
+      const balance = await this.publicClient.readContract({
+        address: CONTRACT_ADDRESSES.TRUST_TOKEN as `0x${string}`,
+        abi: TRUST_TOKEN_ABI,
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+      })
+      return balance
+    } catch (error) {
+      console.error('Failed to get balance:', error)
+      throw error
+    }
+  }
+
+  // Create a new meme token using the factory
+  async createMemeToken(
+    name: string,
+    symbol: string,
+    maxSupply: bigint,
+    walletClient: any
+  ) {
+    try {
+      const hash = await walletClient.writeContract({
+        address: CONTRACT_ADDRESSES.MEME_LAUNCHPAD_FACTORY as `0x${string}`,
+        abi: [
+          {
+            inputs: [
+              { name: 'name', type: 'string' },
+              { name: 'symbol', type: 'string' },
+              { name: 'maxSupply', type: 'uint256' },
+              { name: 'creator', type: 'address' }
+            ],
+            name: 'createMemeToken',
+            outputs: [{ name: '', type: 'address' }],
+            stateMutability: 'nonpayable',
+            type: 'function'
+          }
+        ],
+        functionName: 'createMemeToken',
+        args: [name, symbol, maxSupply, walletClient.account.address],
+      })
+      return hash
+    } catch (error) {
+      console.error('Failed to create meme token:', error)
+      throw error
+    }
+  }
+
+  // Get factory statistics
+  async getFactoryStats() {
+    try {
+      const factory = await this.publicClient.readContract({
+        address: CONTRACT_ADDRESSES.MEME_LAUNCHPAD_FACTORY as `0x${string}`,
+        abi: [
+          {
+            inputs: [],
+            name: 'getStats',
+            outputs: [
+              { name: 'tokenCount', type: 'uint256' },
+              { name: 'treasuryAddress', type: 'address' },
+              { name: 'creationFee', type: 'uint256' }
+            ],
+            stateMutability: 'view',
+            type: 'function'
+          }
+        ],
+        functionName: 'getStats',
+      })
+      return factory
+    } catch (error) {
+      console.error('Failed to get factory stats:', error)
+      throw error
+    }
+  }
+}
+
+// Create default SDK instance
+export const intuitionSDK = new IntuitionSDK(publicClient)
 
 // Chain configuration
 export const SUPPORTED_CHAINS = [

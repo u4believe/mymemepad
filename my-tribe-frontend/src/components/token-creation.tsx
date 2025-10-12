@@ -3,8 +3,15 @@
 import { useState } from 'react'
 import { Button } from './button'
 import { Input } from './input'
+import { useContractInteractions } from '../lib/contracts'
+import { useAccount, useWalletClient } from 'wagmi'
+import { parseEther } from 'viem'
 
 export function TokenCreation() {
+  const { address, isConnected } = useAccount()
+  const { data: walletClient } = useWalletClient()
+  const contractInteractions = useContractInteractions()
+
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -12,21 +19,51 @@ export function TokenCreation() {
     description: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [txHash, setTxHash] = useState<string>('')
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleCreateToken = async () => {
+    if (!isConnected || !walletClient) {
+      alert('Please connect your wallet first')
+      return
+    }
+
     setIsLoading(true)
     try {
-      // TODO: Implement token creation logic
+      const maxSupply = BigInt(formData.maxSupply)
+
+      // Validate max supply range (1M to 1B)
+      if (maxSupply < BigInt(1_000_000) || maxSupply > BigInt(1_000_000_000)) {
+        throw new Error('Max supply must be between 1M and 1B tokens')
+      }
+
       console.log('Creating token:', formData)
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      alert('Token creation functionality will be implemented with smart contract integration')
-    } catch (error) {
+
+      // Create the meme token using the factory
+      const hash = await contractInteractions.createMemeToken(
+        formData.name,
+        formData.symbol,
+        maxSupply
+      )
+
+      setTxHash(hash)
+      console.log('Token created successfully! Transaction hash:', hash)
+
+      // Reset form
+      setFormData({
+        name: '',
+        symbol: '',
+        maxSupply: '',
+        description: '',
+      })
+
+      alert(`Token created successfully! Transaction hash: ${hash}`)
+    } catch (error: any) {
       console.error('Error creating token:', error)
+      alert(`Error: ${error.message || 'Failed to create token'}`)
     } finally {
       setIsLoading(false)
     }
@@ -99,14 +136,34 @@ export function TokenCreation() {
         </div>
       </div>
 
-      <div className="flex justify-center pt-6">
+      <div className="flex flex-col items-center pt-6 space-y-4">
         <Button
           onClick={handleCreateToken}
-          disabled={isLoading || !formData.name || !formData.symbol || !formData.maxSupply}
+          disabled={isLoading || !isConnected || !formData.name || !formData.symbol || !formData.maxSupply}
           className="px-8 py-3 text-lg"
         >
           {isLoading ? 'Creating Token...' : '🚀 Create Token'}
         </Button>
+
+        {!isConnected && (
+          <p className="text-sm text-muted-foreground text-center">
+            Please connect your wallet to create a token
+          </p>
+        )}
+
+        {txHash && (
+          <div className="text-center">
+            <p className="text-sm text-green-600 mb-2">Token created successfully!</p>
+            <a
+              href={`https://intuition-testnet.explorer.caldera.xyz/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              View transaction on explorer
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )

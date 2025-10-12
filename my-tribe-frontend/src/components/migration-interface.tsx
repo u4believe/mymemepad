@@ -142,7 +142,7 @@ export function MigrationInterface() {
         functionName: 'migrateToDEX',
         args: [
           migrationData.tokenAddress,
-          migrationData.bondingCurveAddress,
+          migrationData.bondingCurveAddress as `0x${string}`,
         ],
       })
     } catch (err) {
