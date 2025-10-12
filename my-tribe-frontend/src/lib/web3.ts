@@ -1,42 +1,13 @@
 import { createConfig, http } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
+import { mainnet, sepolia, polygon } from 'wagmi/chains'
 
-// Get project ID from environment variables
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
-
-// Define Intuition Testnet chain
-const intuitionTestnet = {
-  id: 13579,
-  name: 'Intuition Testnet',
-  network: 'intuition-testnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'TTRUST',
-    symbol: 'TTRUST',
-  },
-  rpcUrls: {
-    default: {
-      http: [process.env.NEXT_PUBLIC_NETWORK_URL || 'https://testnet.rpc.intuition.systems'],
-    },
-    public: {
-      http: [process.env.NEXT_PUBLIC_NETWORK_URL || 'https://testnet.rpc.intuition.systems'],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: 'Intuition Explorer',
-      url: 'https://intuition-testnet.explorer.caldera.xyz/',
-    },
-  },
-  testnet: true,
-} as const
-
+// Use a more standard configuration
 export const config = createConfig({
-  chains: [intuitionTestnet, mainnet, sepolia],
+  chains: [mainnet, sepolia, polygon],
   transports: {
-    [intuitionTestnet.id]: http(intuitionTestnet.rpcUrls.default.http[0]),
     [mainnet.id]: http(),
     [sepolia.id]: http(),
+    [polygon.id]: http(),
   },
 })
 
@@ -170,6 +141,37 @@ export const TRUST_TOKEN_ABI = [
     "inputs": [],
     "name": "name",
     "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const
+
+export const MEME_LAUNCHPAD_FACTORY_ABI = [
+  {
+    "inputs": [
+      {"internalType": "string", "name": "name", "type": "string"},
+      {"internalType": "string", "name": "symbol", "type": "string"},
+      {"internalType": "uint256", "name": "maxSupply", "type": "uint256"}
+    ],
+    "name": "createMemeToken",
+    "outputs": [
+      {"internalType": "address", "name": "tokenAddress", "type": "address"},
+      {"internalType": "address", "name": "bondingCurveAddress", "type": "address"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTokenCount",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "tokenAddress", "type": "address"}],
+    "name": "isRegistered",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
     "stateMutability": "view",
     "type": "function"
   }

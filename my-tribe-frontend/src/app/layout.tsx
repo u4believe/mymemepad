@@ -21,8 +21,6 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-screen bg-[var(--background)] font-body antialiased">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-[var(--background)]/80"></div>
-        <div className="cosmic-particles"></div>
         <Providers>
           <div className="relative flex min-h-screen flex-col">
             <Header />

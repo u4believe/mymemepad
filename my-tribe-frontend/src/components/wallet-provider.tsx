@@ -1,22 +1,11 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi'
-import { createWeb3Modal } from '@web3modal/wagmi'
-import { config } from '@/lib/web3'
-
-// Create Web3Modal instance
-const modal = createWeb3Modal({
-  wagmiConfig: config,
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
-  enableAnalytics: true,
-  enableOnramp: true,
-})
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 
 type WalletState = {
   isConnected: boolean
   address: string | undefined
-  balance: number
   connect: () => void
   disconnect: () => void
 }
@@ -25,14 +14,14 @@ const WalletContext = createContext<WalletState | undefined>(undefined)
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { address, isConnected } = useAccount()
-  const { connect } = useConnect()
+  const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
-  const { data: balance } = useBalance({
-    address: address,
-  })
 
   const handleConnect = () => {
-    modal.open()
+    // Use the first available connector (usually MetaMask)
+    if (connectors.length > 0) {
+      connect({ connector: connectors[0] })
+    }
   }
 
   const handleDisconnect = () => {
@@ -42,7 +31,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const value = {
     isConnected: !!isConnected,
     address,
-    balance: balance ? Number(balance.formatted) : 0,
     connect: handleConnect,
     disconnect: handleDisconnect,
   }
