@@ -9,39 +9,48 @@ export function Header() {
   const { isConnected, address, connect } = useWallet()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <Rocket className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg sm:inline-block">
+    <header className="header">
+      <div className="header-content">
+        <Link href="/" className="flex items-center space-x-3 group">
+          <div className="p-2 rounded-lg bg-primary group-hover:scale-110 transition-transform duration-200">
+            <Rocket className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-xl text-foreground group-hover:scale-105 transition-transform duration-200">
             MyTribe
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Button asChild>
-            <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
-              Explore
+        <nav className="header-nav">
+          <Button asChild className="header-nav-button">
+            <Link href="/explore" className="flex items-center gap-2">
+              🔍 Explore
             </Link>
           </Button>
-          <Button asChild>
-            <Link href="/create" className="transition-colors hover:text-foreground/80 text-foreground/60">
-              Create Token
+          <Button asChild className="header-nav-button">
+            <Link href="/create" className="flex items-center gap-2">
+              🚀 Create Token
+            </Link>
+          </Button>
+          <Button asChild className="header-nav-button">
+            <Link href="/trade" className="flex items-center gap-2">
+              💱 Trade Tokens
             </Link>
           </Button>
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
           {isConnected ? (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </span>
-              <Button>
+            <div className="flex items-center space-x-3">
+              <div className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30">
+                <span className="text-sm text-primary font-medium">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+              </div>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Wallet className="h-4 w-4 mr-2" />
                 Connected
               </Button>
             </div>
           ) : (
-            <Button onClick={connect}>
+            <Button onClick={connect} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Wallet className="h-4 w-4 mr-2" />
               Connect Wallet
             </Button>

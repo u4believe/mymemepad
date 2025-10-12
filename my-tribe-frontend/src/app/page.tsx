@@ -43,18 +43,18 @@ export default function Home() {
     )
   }
 
-  // Connected wallet view - Cosmic Network Dashboard
+  // Connected wallet view - Clean Network Dashboard
   return (
-    <div className="w-full" style={{ paddingTop: '100px' }}>
-      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="w-full">
+      <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 pt-8">
 
         {/* Featured Event Section */}
         <div className="featured-event mb-8">
-          <h2 className="text-4xl font-bold mb-2 text-white relative z-10">INTUITION NETWORK is live</h2>
-          <p className="text-cyan-100 mb-6 text-lg relative z-10">
+          <h2 className="text-3xl font-bold mb-2 text-white">INTUITION NETWORK is live</h2>
+          <p className="text-muted-foreground mb-6 text-lg">
             Join the network. Explore decentralized applications and connect with developers.
           </p>
-          <Button className="gradient-button px-8 py-3 text-lg relative z-10">
+          <Button className="px-8 py-3 text-lg">
             Explore Network
           </Button>
         </div>

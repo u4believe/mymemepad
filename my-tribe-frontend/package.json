@@ -12,6 +12,7 @@
     "@0xintuition/graphql": "^2.0.0-alpha.2",
     "@0xintuition/sdk": "^2.0.0-alpha.2",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-toast": "^1.2.15",
     "@web3modal/siwe": "^5.1.11",
     "@web3modal/wagmi": "^5.1.11",
     "class-variance-authority": "^0.7.1",
