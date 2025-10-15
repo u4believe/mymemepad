@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useWallet } from './wallet-provider'
 
 export function Header() {
-  const { isConnected, address, connect } = useWallet()
+  const { isConnected, address, connect, isCorrectNetwork, switchToIntuition, chainId } = useWallet()
 
   return (
     <header className="header">
@@ -31,6 +31,11 @@ export function Header() {
             </Link>
           </Button>
           <Button asChild className="header-nav-button">
+            <Link href="/portfolio" className="flex items-center gap-2">
+              👤 Portfolio
+            </Link>
+          </Button>
+          <Button asChild className="header-nav-button">
             <Link href="/trade" className="flex items-center gap-2">
               💱 Trade Tokens
             </Link>
@@ -39,11 +44,25 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           {isConnected ? (
             <div className="flex items-center space-x-3">
+              {/* Network Status */}
+              <div className={`px-3 py-1 rounded-full border ${
+                isCorrectNetwork
+                  ? 'bg-green-500/20 border-green-500/30'
+                  : 'bg-orange-500/20 border-orange-500/30'
+              }`}>
+                <span className={`text-sm font-medium ${
+                  isCorrectNetwork ? 'text-green-600' : 'text-orange-600'
+                }`}>
+                  {isCorrectNetwork ? '🌐 Intuition' : '⚠️ Wrong Network'}
+                </span>
+              </div>
+
               <div className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30">
                 <span className="text-sm text-primary font-medium">
                   {address?.slice(0, 6)}...{address?.slice(-4)}
                 </span>
               </div>
+
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Wallet className="h-4 w-4 mr-2" />
                 Connected

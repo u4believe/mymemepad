@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from './input'
+import { useWallet } from './wallet-provider'
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
 
 export function TradingInterface() {
+  const { isConnected, isCorrectNetwork, switchToIntuition } = useWallet()
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy')
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,6 +22,21 @@ export function TradingInterface() {
   }
 
   const handleTrade = async () => {
+    if (!isConnected) {
+      alert('Please connect your wallet first')
+      return
+    }
+
+    if (!isCorrectNetwork) {
+      alert('Please switch to Intuition Network to trade tokens')
+      try {
+        await switchToIntuition()
+      } catch (error) {
+        console.error('Failed to switch network:', error)
+      }
+      return
+    }
+
     setIsLoading(true)
     try {
       // TODO: Implement trading logic
@@ -144,7 +161,7 @@ export function TradingInterface() {
 
             <Button
               onClick={handleTrade}
-              disabled={isLoading || !amount || Number(amount) <= 0}
+              disabled={isLoading || !amount || Number(amount) <= 0 || !isConnected || !isCorrectNetwork}
               className={`w-full py-3 text-lg ${
                 activeTab === 'buy'
                   ? 'bg-green-600 hover:bg-green-700'
@@ -156,6 +173,27 @@ export function TradingInterface() {
                 : `${activeTab === 'buy' ? 'Buy' : 'Sell'} ${token.symbol}`
               }
             </Button>
+
+            {!isConnected && (
+              <p className="text-sm text-muted-foreground text-center">
+                Please connect your wallet to trade
+              </p>
+            )}
+
+            {isConnected && !isCorrectNetwork && (
+              <div className="text-center space-y-2">
+                <p className="text-sm text-orange-600">
+                  ⚠️ Please switch to Intuition Network to trade
+                </p>
+                <Button
+                  onClick={switchToIntuition}
+                  variant="outline"
+                  size="sm"
+                >
+                  Switch to Intuition Network
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

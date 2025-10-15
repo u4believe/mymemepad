@@ -111,20 +111,19 @@ contract DeployScript is Script {
         // Verify deployment
         verifyDeployment(address(factory), address(migrator), trustTokenAddress);
 
-        // Save deployment to JSON file for use in other scripts
-        string memory jsonOutput = string(abi.encodePacked(
-            '{"network":"', vm.toString(block.chainid), '",',
-            '"deployer":"', vm.toString(deployer), '",',
-            '"contracts":{',
-            '"LiquidityMigrator":"', vm.toString(address(migrator)), '",',
-            '"MemeLaunchpadFactory":"', vm.toString(address(factory)), '",',
-            '"TRUST_Token":"', vm.toString(trustTokenAddress), '",',
-            '"Treasury":"', vm.toString(treasuryAddress), '"',
-            '}}'
-        ));
+        // Log deployment addresses for manual saving
+        console.log("\n=== IMPORTANT: Save these addresses for your .env file ===");
+        console.log("NEXT_PUBLIC_MEME_LAUNCHPAD_FACTORY_CONTRACT_ADDRESS=", address(factory));
+        console.log("NEXT_PUBLIC_LIQUIDITY_MIGRATOR_CONTRACT_ADDRESS=", address(migrator));
+        console.log("NEXT_PUBLIC_TRUST_TOKEN_ADDRESS=", trustTokenAddress);
+        console.log("NEXT_PUBLIC_TREASURY_ADDRESS=", treasuryAddress);
 
-        vm.writeFile("deployment-foundry.json", jsonOutput);
-        console.log("\nDeployment info saved to deployment-foundry.json");
+        // Also save as separate contract addresses for easy copying
+        console.log("\n=== Contract Addresses ===");
+        console.log("MemeLaunchpadFactory:", address(factory));
+        console.log("LiquidityMigrator:", address(migrator));
+        console.log("TRUST_Token:", trustTokenAddress);
+        console.log("Treasury:", treasuryAddress);
 
         console.log("\nDeployment completed successfully!");
     }

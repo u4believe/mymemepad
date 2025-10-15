@@ -1,16 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from './input'
 import { useContractInteractions } from '../lib/contracts'
 import { useAccount, useWalletClient } from 'wagmi'
+import { useWallet } from './wallet-provider'
 import { parseEther } from 'viem'
 
 export function TokenCreation() {
   const { address, isConnected } = useAccount()
   const { data: walletClient } = useWalletClient()
+  const { isCorrectNetwork, switchToIntuition } = useWallet()
   const contractInteractions = useContractInteractions()
+
+  const [trustBalance, setTrustBalance] = useState<bigint>(BigInt(0))
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [canCreate, setCanCreate] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -21,6 +27,51 @@ export function TokenCreation() {
   const [isLoading, setIsLoading] = useState(false)
   const [txHash, setTxHash] = useState<string>('')
 
+  // Check TTRUST balance when component mounts or address changes
+  useEffect(() => {
+    const checkBalance = async () => {
+      if (!isConnected || !address) {
+        setTrustBalance(BigInt(0))
+        setCanCreate(false)
+        return
+      }
+
+      setIsLoadingBalance(true)
+      try {
+        const balance = await contractInteractions.checkTrustBalance()
+        setTrustBalance(balance)
+
+        const canCreateToken = await contractInteractions.canCreateToken()
+        setCanCreate(canCreateToken)
+      } catch (error) {
+        console.error('Error checking balance:', error)
+        setTrustBalance(BigInt(0))
+        setCanCreate(false)
+      } finally {
+        setIsLoadingBalance(false)
+      }
+    }
+
+    checkBalance()
+  }, [isConnected, address, contractInteractions])
+
+  const refreshBalance = async () => {
+    if (!isConnected || !address) return
+
+    setIsLoadingBalance(true)
+    try {
+      const balance = await contractInteractions.checkTrustBalance()
+      setTrustBalance(balance)
+
+      const canCreateToken = await contractInteractions.canCreateToken()
+      setCanCreate(canCreateToken)
+    } catch (error) {
+      console.error('Error refreshing balance:', error)
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -28,6 +79,21 @@ export function TokenCreation() {
   const handleCreateToken = async () => {
     if (!isConnected || !walletClient) {
       alert('Please connect your wallet first')
+      return
+    }
+
+    if (!isCorrectNetwork) {
+      alert('Please switch to Intuition Network to create tokens')
+      try {
+        await switchToIntuition()
+      } catch (error) {
+        console.error('Failed to switch network:', error)
+      }
+      return
+    }
+
+    if (!canCreate) {
+      alert('Insufficient TTRUST balance. You need at least 10 TTRUST to create a token.')
       return
     }
 
@@ -76,6 +142,39 @@ export function TokenCreation() {
         <p className="text-muted-foreground">
           Launch your own meme token with automated bonding curve pricing and migration capabilities
         </p>
+
+        {/* Balance Requirement Info */}
+        {isConnected && (
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg max-w-md mx-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">TTRUST Balance Requirement</h3>
+              <Button
+                onClick={refreshBalance}
+                variant="outline"
+                size="sm"
+                disabled={isLoadingBalance}
+              >
+                {isLoadingBalance ? '🔄' : '🔃 Refresh'}
+              </Button>
+            </div>
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span>Required:</span>
+              <span className="font-medium">10 TTRUST</span>
+            </div>
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span>Your Balance:</span>
+              <span className={`font-medium ${canCreate ? 'text-green-600' : 'text-red-600'}`}>
+                {isLoadingBalance ? 'Loading...' : `${Number(trustBalance) / 10 ** 18} TTRUST`}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span>Status:</span>
+              <span className={`font-medium ${canCreate ? 'text-green-600' : 'text-red-600'}`}>
+                {canCreate ? '✅ Ready to Create' : '❌ Insufficient Balance'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -125,12 +224,15 @@ export function TokenCreation() {
           </div>
 
           <div className="bg-muted/50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Token Features</h3>
+            <h3 className="font-semibold mb-2">Token Features & Requirements</h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• 0.1% creator allocation locked for 365 days</li>
-              <li>• Automated bonding curve pricing</li>
-              <li>• Migration to DEX at 10M market cap</li>
-              <li>• 1% fee on all trades</li>
+              <li>• ✅ 0.1% creator allocation locked for 365 days</li>
+              <li>• ✅ Automated bonding curve pricing</li>
+              <li>• ✅ Migration to DEX at 10M market cap</li>
+              <li>• ✅ 1% fee on all trades</li>
+              <li className={`font-medium ${canCreate ? 'text-green-600' : 'text-red-600'}`}>
+                • {canCreate ? '✅' : '❌'} Creation fee: 10 TTRUST {canCreate ? '(Paid)' : '(Insufficient balance)'}
+              </li>
             </ul>
           </div>
         </div>
@@ -139,7 +241,7 @@ export function TokenCreation() {
       <div className="flex flex-col items-center pt-6 space-y-4">
         <Button
           onClick={handleCreateToken}
-          disabled={isLoading || !isConnected || !formData.name || !formData.symbol || !formData.maxSupply}
+          disabled={isLoading || !isConnected || !isCorrectNetwork || !canCreate || !formData.name || !formData.symbol || !formData.maxSupply}
           className="px-8 py-3 text-lg"
         >
           {isLoading ? 'Creating Token...' : '🚀 Create Token'}
@@ -149,6 +251,32 @@ export function TokenCreation() {
           <p className="text-sm text-muted-foreground text-center">
             Please connect your wallet to create a token
           </p>
+        )}
+
+        {isConnected && !isCorrectNetwork && (
+          <div className="text-center space-y-2">
+            <p className="text-sm text-orange-600">
+              ⚠️ Please switch to Intuition Network to create tokens
+            </p>
+            <Button
+              onClick={switchToIntuition}
+              variant="outline"
+              size="sm"
+            >
+              Switch to Intuition Network
+            </Button>
+          </div>
+        )}
+
+        {isConnected && isCorrectNetwork && !canCreate && (
+          <div className="text-center space-y-2">
+            <p className="text-sm text-red-600">
+              ⚠️ Insufficient TTRUST balance. You need at least 10 TTRUST to create a token.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Current balance: {Number(trustBalance) / 10 ** 18} TTRUST
+            </p>
+          </div>
         )}
 
         {txHash && (

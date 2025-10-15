@@ -8,6 +8,11 @@ remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/"
 ]
 
+# Compiler optimization settings to reduce contract size
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [profile.intuition]

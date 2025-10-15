@@ -4,7 +4,6 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./MemeToken.sol";
 import "./BondingCurve.sol";
 
@@ -28,6 +27,10 @@ contract MemeLaunchpadFactory is Ownable, ReentrancyGuard {
     mapping(address => address) public tokenToBondingCurve;
     mapping(address => address) public bondingCurveToToken;
     mapping(address => bool) public isTokenRegistered;
+
+    // Creator to tokens mapping
+    mapping(address => address[]) public creatorTokens;
+    mapping(address => mapping(address => bool)) public isCreatorToken;
 
     // Events
     event TokenCreated(
@@ -78,25 +81,10 @@ contract MemeLaunchpadFactory is Ownable, ReentrancyGuard {
         // Collect creation fee
         trustToken.safeTransferFrom(msg.sender, treasury, CREATION_FEE);
 
-        // Deploy meme token
-        MemeToken token = new MemeToken(
-            name,
-            symbol,
-            maxSupply,
-            msg.sender,
-            address(this) // Factory owns the token initially
-        );
+        // Deploy contracts
+        MemeToken token = new MemeToken(name, symbol, maxSupply, msg.sender, address(this));
+        BondingCurve bondingCurve = new BondingCurve(address(token), address(trustToken), maxSupply, treasury, address(this));
 
-        // Deploy bonding curve
-        BondingCurve bondingCurve = new BondingCurve(
-            address(token),
-            address(trustToken),
-            maxSupply,
-            treasury,
-            address(this) // Factory owns the bonding curve initially
-        );
-
-        // Set up relationships
         tokenAddress = address(token);
         bondingCurveAddress = address(bondingCurve);
 
@@ -104,15 +92,13 @@ contract MemeLaunchpadFactory is Ownable, ReentrancyGuard {
         bondingCurveToToken[bondingCurveAddress] = tokenAddress;
         isTokenRegistered[tokenAddress] = true;
 
-        // Transfer ownership to creator
         token.transferOwnership(msg.sender);
         bondingCurve.transferOwnership(msg.sender);
-
-        // Set bonding curve in token contract
         token.setBondingCurve(bondingCurveAddress);
 
-        // Add to registry
         allTokens.push(tokenAddress);
+        creatorTokens[msg.sender].push(tokenAddress);
+        isCreatorToken[msg.sender][tokenAddress] = true;
 
         emit TokenCreated(
             tokenAddress,
@@ -132,57 +118,19 @@ contract MemeLaunchpadFactory is Ownable, ReentrancyGuard {
         return allTokens.length;
     }
 
-    /**
-     * @dev Get tokens by index range
-     * @param startIndex Start index (inclusive)
-     * @param endIndex End index (exclusive)
-     * @return tokens Array of token addresses
-     */
-    function getTokensInRange(
-        uint256 startIndex,
-        uint256 endIndex
-    ) external view returns (address[] memory tokens) {
-        require(startIndex <= endIndex && endIndex <= allTokens.length, "Factory: Invalid range");
 
-        uint256 length = endIndex - startIndex;
-        tokens = new address[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            tokens[i] = allTokens[startIndex + i];
-        }
-    }
-
-    /**
-     * @dev Get bonding curve for a token
-     * @param tokenAddress Token address
-     * @return Bonding curve address
-     */
     function getBondingCurve(address tokenAddress) external view returns (address) {
         return tokenToBondingCurve[tokenAddress];
     }
 
-    /**
-     * @dev Get token for a bonding curve
-     * @param bondingCurveAddress Bonding curve address
-     * @return Token address
-     */
-    function getToken(address bondingCurveAddress) external view returns (address) {
-        return bondingCurveToToken[bondingCurveAddress];
+    function getTokensByCreator(address creator) external view returns (address[] memory) {
+        return creatorTokens[creator];
     }
 
-    /**
-     * @dev Check if a token is registered
-     * @param tokenAddress Token address to check
-     * @return True if token is registered
-     */
-    function isRegistered(address tokenAddress) external view returns (bool) {
-        return isTokenRegistered[tokenAddress];
+    function getCreatorTokenCount(address creator) external view returns (uint256) {
+        return creatorTokens[creator].length;
     }
 
-    /**
-     * @dev Update treasury address (only owner)
-     * @param newTreasury New treasury address
-     */
     function updateTreasury(address newTreasury) external onlyOwner {
         require(newTreasury != address(0), "Factory: Invalid treasury address");
         address oldTreasury = treasury;
@@ -190,21 +138,6 @@ contract MemeLaunchpadFactory is Ownable, ReentrancyGuard {
         emit TreasuryUpdated(oldTreasury, newTreasury);
     }
 
-    /**
-     * @dev Emergency function to transfer stuck tokens (only owner)
-     * @param token Token address to withdraw
-     * @param amount Amount to withdraw
-     */
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
-        IERC20(token).safeTransfer(owner(), amount);
-    }
-
-    /**
-     * @dev Get factory statistics
-     * @return tokenCount Total number of tokens created
-     * @return treasuryAddress Current treasury address
-     * @return creationFee Current creation fee
-     */
     function getStats() external view returns (
         uint256 tokenCount,
         address treasuryAddress,
